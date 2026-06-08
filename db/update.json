@@ -1,1 +1,1 @@
-{"versionCode":17,"versionName":"2.6","notes":"Fix borrado accidental foto - Loading al subir - Sin limite cambios","apkUrl":"https://raw.githubusercontent.com/aledelaprs-alt/alearis-releases/main/ale-aris.apk"}
+{"versionCode":18,"versionName":"2.7","notes":"Fotos privadas: PNG cifrado XOR+SHA256 en ImgBB","apkUrl":"https://raw.githubusercontent.com/aledelaprs-alt/alearis-releases/main/ale-aris.apk"}
