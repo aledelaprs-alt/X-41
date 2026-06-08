@@ -301,7 +301,7 @@ async function decryptXorPng(imgbbUrl, passphrase) {
 }
 
 /** Muestra una foto cifrada XOR en el elemento img dado */
-async function loadEncryptedPhoto(imgbbUrl, (document.getElementById('pass').value || 'patata99'), imgEl, fallbackEl) {
+async function loadEncryptedPhoto(imgbbUrl, passphrase, imgEl, fallbackEl) {
   try {
     const blob = await decryptXorPng(imgbbUrl, passphrase);
     imgEl.src = URL.createObjectURL(blob);
