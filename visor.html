@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📦 Ale & Aris · Visor DB</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #09090b;
+    color: #e4e4e7;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(90deg, #ffd700, #ff8f00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+  }
+
+  .subtitle { font-size: 13px; color: #71717a; margin-bottom: 28px; }
+
+  .passphrase-row {
+    display: flex; gap: 10px; align-items: center; margin-bottom: 28px;
+  }
+  .passphrase-row input {
+    flex: 1; background: #18181b; border: 1px solid #3f3f46;
+    border-radius: 10px; color: #e4e4e7; font-family: inherit;
+    font-size: 14px; padding: 10px 14px; outline: none;
+    transition: border-color .2s;
+  }
+  .passphrase-row input:focus { border-color: #ffd700; }
+  button.load-btn {
+    background: linear-gradient(135deg, #ffd700, #ff8f00);
+    border: none; border-radius: 10px; color: #1a0a00;
+    cursor: pointer; font-family: inherit; font-size: 14px;
+    font-weight: 700; padding: 10px 20px; transition: opacity .2s;
+    white-space: nowrap;
+  }
+  button.load-btn:hover { opacity: .85; }
+  button.load-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  .status {
+    font-size: 12px; color: #a1a1aa; margin-bottom: 20px;
+    padding: 10px 14px; background: #18181b; border-radius: 8px;
+    border: 1px solid #27272a; display: none;
+  }
+  .status.visible { display: block; }
+
+  .tabs {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px;
+  }
+  .tab {
+    background: #18181b; border: 1px solid #3f3f46; border-radius: 8px;
+    color: #a1a1aa; cursor: pointer; font-size: 12px; font-weight: 600;
+    padding: 6px 14px; transition: all .15s;
+    display: none;
+  }
+  .tab.visible { display: inline-flex; align-items: center; gap: 5px; }
+  .tab.active { background: #292524; border-color: #ffd700; color: #ffd700; }
+  .tab .badge {
+    background: #ffd700; color: #1a0a00; border-radius: 100px;
+    font-size: 10px; font-weight: 700; padding: 1px 6px;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── CHAT ── */
+  .chat-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .msg {
+    display: flex; gap: 10px; align-items: flex-end;
+  }
+  .msg.ale { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, #ffd700, #ff8f00);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  .msg.ale .avatar { background: linear-gradient(135deg, #818cf8, #6366f1); }
+
+  .bubble {
+    max-width: 70%; background: #27272a; border-radius: 16px 16px 16px 4px;
+    padding: 10px 14px;
+  }
+  .msg.ale .bubble { border-radius: 16px 16px 4px 16px; background: #1e1b4b; }
+
+  .bubble .sender {
+    font-size: 10px; font-weight: 700; color: #ffd700;
+    margin-bottom: 4px; text-transform: uppercase; letter-spacing: .5px;
+  }
+  .msg.ale .bubble .sender { color: #818cf8; }
+
+  .bubble .text { font-size: 14px; line-height: 1.5; word-break: break-word; }
+  .bubble .time {
+    font-size: 10px; color: #52525b; margin-top: 5px; text-align: right;
+  }
+
+  .bubble img.pic {
+    max-width: 100%; border-radius: 10px; margin-top: 6px;
+    cursor: pointer; display: block;
+  }
+
+  .type-badge {
+    display: inline-block; font-size: 9px; font-weight: 700;
+    letter-spacing: .5px; padding: 2px 7px; border-radius: 100px;
+    margin-bottom: 5px; text-transform: uppercase;
+  }
+  .type-pictime { background: rgba(255,109,0,.2); color: #ff6d00; border: 1px solid rgba(255,109,0,.4); }
+  .type-text    { background: rgba(161,161,170,.1); color: #71717a; border: 1px solid rgba(161,161,170,.2); }
+  .type-song    { background: rgba(129,140,248,.15); color: #818cf8; border: 1px solid rgba(129,140,248,.3); }
+
+  /* ── PLANS, SONGS, FLATS, WISHLIST ── */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+
+  .card {
+    background: #18181b; border: 1px solid #27272a; border-radius: 14px;
+    padding: 16px; transition: border-color .2s;
+  }
+  .card:hover { border-color: #3f3f46; }
+
+  .card-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .card-sub   { font-size: 12px; color: #71717a; line-height: 1.6; }
+  .card-tag {
+    display: inline-block; font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 100px; margin-top: 8px;
+    background: rgba(255,215,0,.1); color: #ffd700; border: 1px solid rgba(255,215,0,.25);
+  }
+
+  /* ── PHOTOS grid ── */
+  .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .photo-card {
+    background: #18181b; border: 1px solid #27272a; border-radius: 12px;
+    overflow: hidden;
+  }
+  .photo-card img {
+    width: 100%; aspect-ratio: 1; object-fit: cover; display: block; cursor: pointer;
+  }
+  .photo-card .photo-meta {
+    padding: 8px 10px; font-size: 11px; color: #71717a;
+  }
+
+  /* ── LIGHTBOX ── */
+  #lightbox {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.92);
+    z-index: 9999; align-items: center; justify-content: center;
+  }
+  #lightbox.open { display: flex; }
+  #lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 12px; }
+  #lightbox-close {
+    position: fixed; top: 20px; right: 20px; background: #27272a;
+    border: none; border-radius: 50%; color: #e4e4e7; cursor: pointer;
+    font-size: 20px; width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .empty { color: #52525b; font-size: 14px; padding: 40px 0; text-align: center; }
+
+  hr { border: none; border-top: 1px solid #27272a; margin: 24px 0; }
+
+  .section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
+    color: #52525b; text-transform: uppercase; margin-bottom: 14px;
+  }
+</style>
+</head>
+<body>
+
+<h1>📦 Ale & Aris · Visor DB</h1>
+<p class="subtitle">Descifra y muestra todo el contenido de la base de datos en GitHub.</p>
+
+<div class="passphrase-row">
+  <input id="pass" type="password" placeholder="Contraseña (passphrase)" value="patata99" />
+  <button class="load-btn" id="loadBtn" onclick="loadAll()">⚡ Cargar todo</button>
+</div>
+
+<div class="status" id="status"></div>
+
+<div class="tabs">
+  <div class="tab" id="tab-chat"   onclick="showTab('chat')">💬 Mensajes <span class="badge" id="cnt-chat">0</span></div>
+  <div class="tab" id="tab-photos" onclick="showTab('photos')">📸 PicTime <span class="badge" id="cnt-photos">0</span></div>
+  <div class="tab" id="tab-plans"  onclick="showTab('plans')">📅 Planes <span class="badge" id="cnt-plans">0</span></div>
+  <div class="tab" id="tab-songs"  onclick="showTab('songs')">🎵 Canciones <span class="badge" id="cnt-songs">0</span></div>
+  <div class="tab" id="tab-flats"  onclick="showTab('flats')">🏠 Pisos <span class="badge" id="cnt-flats">0</span></div>
+  <div class="tab" id="tab-wish"   onclick="showTab('wish')">⭐ Wishlist <span class="badge" id="cnt-wish">0</span></div>
+</div>
+
+<!-- Chat -->
+<div class="section" id="section-chat">
+  <div class="section-title">Mensajes de chat</div>
+  <div class="chat-list" id="chat-list"></div>
+</div>
+
+<!-- PicTime photos -->
+<div class="section" id="section-photos">
+  <div class="section-title">Fotos PicTime</div>
+  <div class="photo-grid" id="photo-grid"></div>
+</div>
+
+<!-- Plans -->
+<div class="section" id="section-plans">
+  <div class="section-title">Planes compartidos</div>
+  <div class="card-grid" id="plans-grid"></div>
+</div>
+
+<!-- Songs -->
+<div class="section" id="section-songs">
+  <div class="section-title">Canciones compartidas</div>
+  <div class="card-grid" id="songs-grid"></div>
+</div>
+
+<!-- Flats -->
+<div class="section" id="section-flats">
+  <div class="section-title">Pisos futuros</div>
+  <div class="card-grid" id="flats-grid"></div>
+</div>
+
+<!-- Wishlist -->
+<div class="section" id="section-wish">
+  <div class="section-title">Lista de deseos</div>
+  <div class="card-grid" id="wish-grid"></div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+const GH_TOKEN = ['ghp_u7Aq','UWdkcXCv','AXnviwcM','a2dK9Im6','uA4WveD4'].join('');
+const GH_OWNER  = 'aledelaprs-alt';
+const GH_REPO   = 'X-41';
+const GH_BRANCH = 'main';
+const GH_HEADERS = {
+  'Accept': 'application/vnd.github+json',
+  'User-Agent': 'AleArisVisor/1.0'
+};
+
+// Misma clave: SHA-256(passphrase), mismo layout: 4-byte header + RGB pixels
+
+async function deriveXorKey(passphrase) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(passphrase));
+  return new Uint8Array(buf);  // 32 bytes
+}
+
+async function decryptXorPng(imgbbUrl, passphrase) {
+  // 1. Descargar el PNG con CORS (ImgBB sirve Access-Control-Allow-Origin: *)
+  let blob;
+  try {
+    const resp = await fetch(imgbbUrl, { mode: 'cors', cache: 'no-store' });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    blob = await resp.blob();
+  } catch (e) {
+    // Fallback: proxy CORS
+    console.warn('[XorDecrypt] fetch directo failó, usando proxy:', e.message);
+    const proxy = 'https://corsproxy.io/?' + encodeURIComponent(imgbbUrl);
+    const resp2 = await fetch(proxy, { cache: 'no-store' });
+    if (!resp2.ok) throw new Error(`proxy HTTP ${resp2.status}`);
+    blob = await resp2.blob();
+  }
+
+  // 2. Extraer pixels RGB via canvas
+  const bmp = await createImageBitmap(blob);
+  const cv = document.createElement('canvas');
+  cv.width = bmp.width; cv.height = bmp.height;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(bmp, 0, 0);
+  if (bmp.close) bmp.close();
+  const rgba = ctx.getImageData(0, 0, cv.width, cv.height).data;
+
+  // Extraer solo canales RGB (3 bytes por pixel, saltar alpha)
+  const raw = new Uint8Array(cv.width * cv.height * 3);
+  for (let i = 0, j = 0; i < rgba.length; i += 4, j += 3) {
+    raw[j] = rgba[i]; raw[j+1] = rgba[i+1]; raw[j+2] = rgba[i+2];
+  }
+
+  // 3. Leer tamaño original (4 bytes big-endian)
+  const originalSize = ((raw[0] << 24) | (raw[1] << 16) | (raw[2] << 8) | raw[3]) >>> 0;
+  if (originalSize <= 0 || originalSize > 20_000_000) throw new Error('Cabecera inválida');
+
+  // 4. XOR con clave SHA-256(passphrase)
+  const key = await deriveXorKey(passphrase);
+  const xored = raw.slice(4, 4 + originalSize);
+  const decrypted = new Uint8Array(xored.length);
+  for (let i = 0; i < xored.length; i++) decrypted[i] = xored[i] ^ key[i % key.length];
+
+  return new Blob([decrypted], { type: 'image/jpeg' });
+}
+
+/** Muestra una foto cifrada XOR en el elemento img dado */
+async function loadEncryptedPhoto(imgbbUrl, (document.getElementById('pass').value || 'patata99'), imgEl, fallbackEl) {
+  try {
+    const blob = await decryptXorPng(imgbbUrl, passphrase);
+    imgEl.src = URL.createObjectURL(blob);
+    imgEl.style.display = '';
+    imgEl.onclick = () => openLightbox(imgEl.src);
+  } catch (e) {
+    console.error('[XorDecrypt]', e);
+    if (fallbackEl) { fallbackEl.hidden = false; }
+  }
+}
+
+/** Reemplaza un placeholder <img> con la imagen descifrada desde ImgBB (API antigua, no usada) */
+async function loadImgBBPhoto(imgbbUrl, imgEl, onError) {
+  // Compatibilidad con llamadas antiguas — ahora usa XOR
+  loadEncryptedPhoto(imgbbUrl, (document.getElementById('pass').value || 'patata99'), imgEl, null).catch(e => { if (onError) onError(e.message); });
+}
+
+
+// ─── CRYPTO ──────────────────────────────────────────────────────────────────
+async function deriveKey(passphrase) {
+  const enc = new TextEncoder();
+  const data = enc.encode(passphrase.trim().toLowerCase());
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return crypto.subtle.importKey('raw', hash, { name: 'AES-GCM' }, false, ['decrypt']);
+}
+
+async function decrypt(b64, key) {
+  try {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    if (bytes.length < 13) return null;
+    const iv = bytes.slice(0, 12);
+    const ct = bytes.slice(12);
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv, tagLength: 128 }, key, ct);
+    return new TextDecoder().decode(plain);
+  } catch { return null; }
+}
+
+// ─── GITHUB FETCH ────────────────────────────────────────────────────────────
+async function fetchGHFile(path) {
+  const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`;
+  const r = await fetch(url, { headers: GH_HEADERS });
+  if (!r.ok) return null;
+  const j = await r.json();
+  // GitHub devuelve el contenido en base64
+  const raw = atob(j.content.replace(/\n/g, ''));
+  return JSON.parse(raw);
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function ts(ms) {
+  if (!ms) return '';
+  const d = new Date(ms);
+  return d.toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' })
+       + ' ' + d.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+}
+
+function status(msg) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+// ─── LOAD ALL ────────────────────────────────────────────────────────────────
+async function loadAll() {
+  const btn = document.getElementById('loadBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Cargando...';
+
+  const pass = document.getElementById('pass').value || 'patata99';
+  const key = await deriveKey(pass);
+
+  const tables = [
+    { name: 'chat_messages', label: 'chat' },
+    { name: 'plans',         label: 'plans' },
+    { name: 'flats',         label: 'flats' },
+    { name: 'wishlist',      label: 'wish' },
+    { name: 'songs',         label: 'songs' },
+  ];
+
+  const results = {};
+  for (const t of tables) {
+    status(`Cargando ${t.name}...`);
+    try {
+      const arr = await fetchGHFile(`db/${t.name}.json`);
+      if (!Array.isArray(arr)) { results[t.label] = []; continue; }
+
+      const decrypted = [];
+      for (const enc of arr) {
+        // Primer pase: descifra el ChatMessage completo
+        const plain = await decrypt(enc, key);
+        if (!plain) continue;
+        let msg;
+        try { msg = JSON.parse(plain); } catch { continue; }
+
+        // Segundo pase: descifra el encryptedText (siempre está cifrado)
+        if (msg.encryptedText) {
+          const innerPlain = await decrypt(msg.encryptedText, key);
+          if (innerPlain !== null) {
+            msg._plainText = innerPlain;   // texto/base64 imagen en claro
+          } else {
+            msg._plainText = msg.encryptedText; // fallback sin descifrar
+          }
+        } else if (msg.text) {
+          // compatibilidad con campos legacy
+          msg._plainText = msg.text;
+        }
+
+        decrypted.push(msg);
+      }
+      results[t.label] = decrypted;
+    } catch(e) {
+      results[t.label] = [];
+      console.warn(t.name, e);
+    }
+  }
+
+  status(`✅ Listo — ${Object.values(results).reduce((a,b)=>a+b.length,0)} registros descifrados.`);
+
+  // DEBUG: mostrar primeros 2 mensajes descifrados en consola y en status
+  if (results.chat && results.chat.length > 0) {
+    const sample = results.chat.slice(0,2).map(m => {
+      const {_plainText, ...rest} = m;
+      return {fields: Object.keys(rest), _plainText_len: (_plainText||'').length, first20: (_plainText||'').substring(0,30), ...rest};
+    });
+    console.log('[DEBUG CHAT SAMPLE]', JSON.stringify(sample, null, 2));
+    document.getElementById('status').innerHTML +=
+      `<br><small style="font-family:monospace;color:#ffd700">DEBUG campos: ${JSON.stringify(Object.keys(results.chat[0]||{}))}<br>_plainText[0..30]: "${(results.chat[0]?._plainText||'').substring(0,30)}"<br>messageType: "${results.chat[0]?.messageType}"<br>encryptedText existe: ${!!results.chat[0]?.encryptedText}</small>`;
+  }
+
+  renderChat(results.chat || []);
+  renderPhotos(results.chat || []);
+  renderPlans(results.plans || []);
+  renderSongs(results.songs || []);
+  renderFlats(results.flats || []);
+  renderWish(results.wish || []);
+
+  btn.disabled = false;
+  btn.textContent = '🔄 Recargar';
+
+  showTab('chat');
+}
+
+// ─── RENDERERS ───────────────────────────────────────────────────────────────
+function isBase64Img(s) {
+  return s && (s.startsWith('/9j/') || s.startsWith('iVBOR') || s.startsWith('R0lGOD'));
+}
+
+function renderChat(msgs) {
+  const list = document.getElementById('chat-list');
+  list.innerHTML = '';
+  const sorted = [...msgs].sort((a,b) => (a.timestamp||0) - (b.timestamp||0));
+  document.getElementById('cnt-chat').textContent = sorted.length;
+  document.getElementById('tab-chat').classList.add('visible');
+
+  if (!sorted.length) { list.innerHTML = '<div class="empty">Sin mensajes</div>'; return; }
+
+  for (const m of sorted) {
+    const isAle = (m.sender||'').toLowerCase() === 'ale';
+    const emoji = isAle ? '💛' : '💜';
+    const msgType = m.messageType || m.type || 'text';
+    const plainText = m._plainText || '';
+    const isPic = msgType === 'pictime';
+    const isImg = isBase64Img(plainText);
+    const imgbbUrl = m.imgbbUrl || '';
+
+    const div = document.createElement('div');
+    div.className = 'msg' + (isAle ? ' ale' : '');
+
+    let inner = `<div class="avatar">${emoji}</div><div class="bubble">`;
+    inner += `<div class="sender">${m.sender || '?'}</div>`;
+
+    if (isPic && imgbbUrl) {
+      const isEnc = m.photoEncrypted === true || m.photoEncrypted === 1;
+      if (isEnc) {
+        // Foto XOR cifrada: placeholder que se rellena asincronamente
+        inner += `<span class="type-badge type-pictime">📸 PicTime · Privado</span>`;
+        inner += `<img class="pic" id="pic-${m.id}" style="display:none" alt="PicTime">`;
+        inner += `<div class="text" style="color:#71717a;font-size:11px" id="err-${m.id}" hidden>⚠️ Error al descifrar</div>`;
+        inner += `<div style="color:#71717a;font-size:11px" id="ldg-${m.id}">⏳ Descifrando...</div>`;
+      } else {
+        // Foto sin cifrar (versiones anteriores a v2.7)
+        inner += `<span class="type-badge type-pictime">📸 PicTime · ImgBB</span>`;
+        inner += `<img class="pic" src="${imgbbUrl}" loading="lazy" onclick="openLightbox(this.src)" alt="PicTime" onerror="this.style.display='none';this.nextElementSibling.hidden=false">`;
+        inner += `<div class="text" style="color:#71717a;font-size:11px" hidden>⚠️ No se pudo cargar desde ImgBB</div>`;
+      }
+    } else if (isPic && isImg) {
+      inner += `<span class="type-badge type-pictime">📸 PicTime</span>`;
+      inner += `<img class="pic" src="data:image/jpeg;base64,${plainText}" loading="lazy" onclick="openLightbox(this.src)" alt="PicTime">`;
+    } else if (isPic) {
+      inner += `<span class="type-badge type-pictime">📸 PicTime</span>`;
+      inner += `<div class="text" style="color:#71717a;font-size:12px">Foto cifrada</div>`;
+    } else if (msgType === 'song' || msgType === 'shared_song') {
+      inner += `<span class="type-badge type-song">🎵 Canción</span>`;
+      inner += `<div class="text">${plainText.replace(/</g,'&lt;')}</div>`;
+    } else if (msgType === 'drawing') {
+      inner += `<span class="type-badge" style="background:rgba(52,211,153,.1);color:#34d399;border:1px solid rgba(52,211,153,.3)">✏️ Dibujo</span>`;
+      inner += `<div class="text" style="color:#71717a;font-size:12px">[datos de dibujo]</div>`;
+    } else {
+      inner += `<div class="text">${plainText.replace(/</g,'&lt;')}</div>`;
+    }
+
+    inner += `<div class="time">${ts(m.timestamp)}</div></div>`;
+    div.innerHTML = inner;
+    list.appendChild(div);
+
+    // Descifrar la foto XOR después de insertar en DOM
+    if (isPic && imgbbUrl && (m.photoEncrypted === true || m.photoEncrypted === 1)) {
+      const imgEl = document.getElementById(`pic-${m.id}`);
+      const errEl = document.getElementById(`err-${m.id}`);
+      const ldgEl = document.getElementById(`ldg-${m.id}`);
+      loadEncryptedPhoto(imgbbUrl, (document.getElementById('pass').value || 'patata99'), imgEl, errEl).finally(() => { if (ldgEl) ldgEl.remove(); });
+    }
+  }
+}
+
+function renderPhotos(msgs) {
+  const grid = document.getElementById('photo-grid');
+  grid.innerHTML = '';
+  const pics = msgs.filter(m => {
+    const t = m.messageType || m.type || '';
+    const p = m._plainText || '';
+    const u = m.imgbbUrl || '';
+    return t === 'pictime' || isBase64Img(p) || u;
+  });
+  document.getElementById('cnt-photos').textContent = pics.length;
+  if (pics.length) document.getElementById('tab-photos').classList.add('visible');
+
+  if (!pics.length) { grid.innerHTML = '<div class="empty">Sin fotos PicTime</div>'; return; }
+
+  const sorted = [...pics].sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+  for (const p of sorted) {
+    const imgSrc   = p._plainText || '';
+    const imgbbUrl = p.imgbbUrl   || '';
+    const card = document.createElement('div');
+    card.className = 'photo-card';
+
+    if (imgbbUrl) {
+      const isEnc = p.photoEncrypted === true || p.photoEncrypted === 1;
+      if (isEnc) {
+        card.innerHTML = `
+          <img id="pgrid-${p.id}" style="display:none" alt="PicTime de ${p.sender}">
+          <div id="pgrid-ldg-${p.id}" style="font-size:11px;color:#9ca3af;text-align:center;padding:20px">⏳ Descifrando...</div>
+          <div class="photo-meta">📸 ${p.sender || '?'} · ${ts(p.timestamp)} · <span style="color:#818cf8;font-size:10px">🔒 Privado</span></div>
+        `;
+        card.style.minHeight = '120px';
+        grid.appendChild(card);
+        // Descifrar asincronamente
+        const imgEl = document.getElementById(`pgrid-${p.id}`);
+        const ldgEl = document.getElementById(`pgrid-ldg-${p.id}`);
+        loadEncryptedPhoto(imgbbUrl, (document.getElementById('pass').value || 'patata99'), imgEl, null).finally(() => { if (ldgEl) ldgEl.remove(); });
+        continue;
+      }
+      // Foto sin cifrar (pre-v2.7)
+      card.innerHTML = `
+        <img src="${imgbbUrl}" loading="lazy"
+             onclick="openLightbox(this.src)" alt="PicTime de ${p.sender}"
+             onerror="this.style.display='none'">
+        <div class="photo-meta">📸 ${p.sender || '?'} · ${ts(p.timestamp)} · <span style="color:#818cf8;font-size:10px">ImgBB</span></div>
+      `;
+    } else if (isBase64Img(imgSrc)) {
+      card.innerHTML = `
+        <img src="data:image/jpeg;base64,${imgSrc}" loading="lazy"
+             onclick="openLightbox(this.src)" alt="PicTime de ${p.sender}">
+        <div class="photo-meta">📸 ${p.sender || '?'} · ${ts(p.timestamp)}</div>
+      `;
+    } else { continue; }
+
+    grid.appendChild(card);
+  }
+}
+
+function renderPlans(plans) {
+  const grid = document.getElementById('plans-grid');
+  grid.innerHTML = '';
+  const sorted = [...plans].sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+  document.getElementById('cnt-plans').textContent = sorted.length;
+  if (sorted.length) document.getElementById('tab-plans').classList.add('visible');
+
+  if (!sorted.length) { grid.innerHTML = '<div class="empty">Sin planes</div>'; return; }
+
+  for (const p of sorted) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-title">${p.title || 'Plan sin título'}</div>
+      <div class="card-sub">
+        ${p.description ? p.description + '<br>' : ''}
+        ${p.targetDateStr || p.targetDate ? '📅 ' + (p.targetDateStr || ts(p.targetDate)) : ''}
+        ${p.location ? '<br>📍 ' + p.location : ''}
+      </div>
+      <span class="card-tag">por ${p.createdBy || '?'}</span>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+function renderSongs(songs) {
+  const grid = document.getElementById('songs-grid');
+  grid.innerHTML = '';
+  const sorted = [...songs].sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+  document.getElementById('cnt-songs').textContent = sorted.length;
+  if (sorted.length) document.getElementById('tab-songs').classList.add('visible');
+
+  if (!sorted.length) { grid.innerHTML = '<div class="empty">Sin canciones</div>'; return; }
+
+  for (const s of sorted) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-title">🎵 ${s.title || s.songTitle || 'Canción'}</div>
+      <div class="card-sub">
+        ${s.artist || s.artistName ? '🎤 ' + (s.artist || s.artistName) : ''}
+        ${s.url ? '<br><a href="' + s.url + '" target="_blank" style="color:#818cf8">🔗 Abrir</a>' : ''}
+        ${s.note || s.message ? '<br>💬 ' + (s.note || s.message) : ''}
+        <br>⏱ ${ts(s.timestamp)}
+      </div>
+      <span class="card-tag">por ${s.sender || s.sharedBy || '?'}</span>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+function renderFlats(flats) {
+  const grid = document.getElementById('flats-grid');
+  grid.innerHTML = '';
+  const sorted = [...flats].sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+  document.getElementById('cnt-flats').textContent = sorted.length;
+  if (sorted.length) document.getElementById('tab-flats').classList.add('visible');
+
+  if (!sorted.length) { grid.innerHTML = '<div class="empty">Sin pisos</div>'; return; }
+
+  for (const f of sorted) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-title">🏠 ${f.address || f.title || 'Piso'}</div>
+      <div class="card-sub">
+        ${f.price ? '💶 ' + f.price : ''}
+        ${f.size || f.sqm ? '<br>📐 ' + (f.size || f.sqm) + ' m²' : ''}
+        ${f.rooms ? '<br>🛏 ' + f.rooms + ' hab' : ''}
+        ${f.url ? '<br><a href="' + f.url + '" target="_blank" style="color:#818cf8">🔗 Ver piso</a>' : ''}
+        ${f.notes || f.description ? '<br>📝 ' + (f.notes || f.description) : ''}
+      </div>
+      <span class="card-tag">por ${f.addedBy || f.createdBy || '?'}</span>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+function renderWish(items) {
+  const grid = document.getElementById('wish-grid');
+  grid.innerHTML = '';
+  const sorted = [...items].sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+  document.getElementById('cnt-wish').textContent = sorted.length;
+  if (sorted.length) document.getElementById('tab-wish').classList.add('visible');
+
+  if (!sorted.length) { grid.innerHTML = '<div class="empty">Sin wishlist</div>'; return; }
+
+  for (const w of sorted) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-title">⭐ ${w.title || w.name || 'Deseo'}</div>
+      <div class="card-sub">
+        ${w.description || w.notes ? (w.description || w.notes) + '<br>' : ''}
+        ${w.url ? '<a href="' + w.url + '" target="_blank" style="color:#818cf8">🔗 Enlace</a><br>' : ''}
+        ⏱ ${ts(w.timestamp)}
+      </div>
+      <span class="card-tag">por ${w.addedBy || w.createdBy || '?'}</span>
+    `;
+    grid.appendChild(card);
+  }
+}
+</script>
+</body>
+</html>
+
+
