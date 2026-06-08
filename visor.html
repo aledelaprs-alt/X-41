@@ -448,6 +448,35 @@ async function loadAll() {
       `<br><small style="font-family:monospace;color:#ffd700">DEBUG campos: ${JSON.stringify(Object.keys(results.chat[0]||{}))}<br>_plainText[0..30]: "${(results.chat[0]?._plainText||'').substring(0,30)}"<br>messageType: "${results.chat[0]?.messageType}"<br>encryptedText existe: ${!!results.chat[0]?.encryptedText}</small>`;
   }
 
+  // ── Cargar también el backup permanente de PicTimes ───────────────────────
+  // pictime_backup.json NUNCA se borra. Es la fuente de verdad histórica.
+  try {
+    status('Cargando pictime_backup...');
+    const bkArr = await fetchGHFile('db/backup/pictime_backup.json');
+    if (Array.isArray(bkArr)) {
+      const bkDecrypted = [];
+      for (const enc of bkArr) {
+        const plain = await decrypt(enc, key);
+        if (!plain) continue;
+        let msg; try { msg = JSON.parse(plain); } catch { continue; }
+        if (msg.encryptedText) {
+          const ip = await decrypt(msg.encryptedText, key);
+          msg._plainText = ip !== null ? ip : msg.encryptedText;
+        }
+        bkDecrypted.push(msg);
+      }
+      // Merge: añadir los del backup que no estén ya en results.chat (por id o timestamp)
+      const existingIds = new Set((results.chat||[]).map(m => m.id || m.timestamp));
+      for (const m of bkDecrypted) {
+        const key2 = m.id || m.timestamp;
+        if (!existingIds.has(key2)) {
+          (results.chat = results.chat || []).push(m);
+          existingIds.add(key2);
+        }
+      }
+    }
+  } catch(e) { console.warn('backup/pictime_backup.json', e); }
+
   renderChat(results.chat || []);
   renderPhotos(results.chat || []);
   renderPlans(results.plans || []);
