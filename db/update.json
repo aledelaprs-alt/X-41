@@ -1,1 +1,6 @@
-{"versionCode":36,"versionName":"4.2","notes":"Fix PicTime: ya no muestra Se te fue durante la ventana activa. Subida de fotos mas rapida 📸","apkUrl":"https://github.com/aledelaprs-alt/X-41/releases/download/v4.2/AleAris_v4.2.apk"}
+{
+  "versionCode": 37,
+  "versionName": "4.3",
+  "notes": "pictime github",
+  "apkUrl": "https://github.com/aledelaprs-alt/X-41/releases/download/v4.3/app-release-4.3.apk"
+}
