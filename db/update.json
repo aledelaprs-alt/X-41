@@ -1,6 +1,1 @@
-{
-  "versionCode": 38,
-  "versionName": "4.4",
-  "notes": "arreglo pictime github",
-  "apkUrl": "https://github.com/aledelaprs-alt/X-41/releases/download/v4.4/app-release-4.4.apk"
-}
+{"versionCode":405,"versionName":"4.5","notes":"REFORMA CARGA PICTIME - Carga de fotos mejorada, boton siempre activo durante ventana PicTime, horas del schedule en admin","apkUrl":"https://raw.githubusercontent.com/aledelaprs-alt/X-41/main/releases/ale-aris.apk"}
